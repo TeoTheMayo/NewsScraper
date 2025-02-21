@@ -8,23 +8,13 @@ import configparser
 
 #Initialze the config
 config = configparser.ConfigParser()
-config.read("/Users/matteo/Desktop/SeriousProjects/NewScraper/conf.conf")
+config.read("conf.conf")
 
 
 target_url = "https://apnews.com/"
 
-#Headers to help scrape website
-headers = {
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'accept-encoding': 'gzip, deflate, br',
-    'accept-language': 'en-US,en;q=0.8',
-    'upgrade-insecure-requests': '1',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'
-}
 
-
-r = requests.get(target_url, headers=headers)#fetch site
-
+r = requests.get(target_url)#fetch site
 soup = BeautifulSoup(r.text, "html.parser")
 
 #function for finding other relevant headlines
@@ -50,22 +40,31 @@ def convertingListHtml(soup, list):
     #Gets the main headline
     firstElement = soup.find(class_ = "PagePromo-title")
     link = firstElement.find("a")
+    firstElement = firstElement.get_text()
     link = link.get("href")
 
     html_body = "<h1>News Articles of the Day</h1>"
-    html_body += f'<h3>Main Story: {firstElement}, <a href = "{link}">Read More</a></h3>' 
-    html_body += "SECONDARY STORIES:"
+    html_body += f'<h2>Main Story:</h2> <h3>{firstElement} <a href = "{link}"><strong> Read More</strong></a></h3>' 
+    html_body += "<h5>SECONDARY STORIES:</h5><ul>"
     
     #Only writing out first 11 entries considering many of the stories at the bottom of the page are irrelevent/ads
     #Plan: WRITE ALGO TO ADD WEIGHTS TO KEY WORDS (TRUMP, UKRAINE, CHINA, FATAL, ETC) AND FETCH MOST RELEVANT STORIES BASED ON WEIGHT
     for i in range(0, 4):
-        html_body += f'<p>{list[i][0]}<a href = "{list[i][1]}"> Read More<a/></p>'
+        html_body += f'<li><p>{list[i][0]}<a href = "{list[i][1]}"><strong> Read More<strong><a/></p></li>'
 
-    html_body += "<h5>OTHER RELEVANT STORIES</h5>"
+    html_body += "</ul><h5>OTHER RELEVANT STORIES</h5><ul>"
     for i in range(4, 10):
-        html_body += f'<p>{list[i][0]}<a href = "{list[i][1]}"> Read More<a/></p>'
+        html_body += f'<li><p>{list[i][0]}<a href = "{list[i][1]}."><strong> Read More</strong><a/></p></li>'
 
     return html_body
+
+
+
+
+
+
+
+
 
 
 #code for initialzing email
@@ -73,7 +72,7 @@ msg = MIMEMultipart()
 msg["Subject"] = "Today's News"
 me = config["DEFAULT"]["SENDER_EMAIL"]
 family = config["DEFAULT"]["RECEIVER_EMAIL"]
-george = config["DEFAULT"]["GEORGE_RECEIVER_EMAIL"]
+friend = config["DEFAULT"]["FRIEND_RECEIVER_EMAIL"]
 msg["From"] = me
 msg["To"] = me
 html_body = convertingListHtml(soup, findBlocks(soup))
